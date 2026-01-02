@@ -2,95 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Eco-Responders: After the Fire</title>
+  <title>Eco-Responders Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background-color: #f5f7f6;
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f5f7f6; line-height: 1.6; }
+    header { background:#2f5d50; color:#fff; padding: 1.25rem; }
+    main { max-width: 900px; margin: 0 auto; background: #fff; padding: 1.5rem; }
+    h1,h2,h3 { margin-top: 0; color:#1f3b34; }
+    .card { background:#eef5f2; border-left: 5px solid #2f5d50; padding: 1rem; margin: 1rem 0; border-radius: 10px; }
+    .small { font-size: 0.92rem; color:#455; }
+    .row { display:flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .btn {
+      background:#2f5d50; color:#fff; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;
+      font-size:1rem;
     }
-    header {
-      background: #2f5d50;
-      color: white;
-      padding: 1.25rem;
+    .btn.secondary { background:#405a53; }
+    .btn.ghost { background: transparent; border: 1px solid #2f5d50; color:#2f5d50; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    textarea {
+      width: 100%; min-height: 120px; padding: 0.75rem; border-radius: 12px; border: 1px solid #cfd8d5;
+      font-size: 1rem; box-sizing: border-box;
     }
-    main {
-      max-width: 900px;
-      margin: auto;
-      padding: 1.5rem;
-      background: white;
-    }
-    h1, h2, h3 {
-      color: #2f5d50;
-    }
-    .mission-box {
-      background: #eef5f2;
-      border-left: 5px solid #2f5d50;
-      padding: 1rem;
-      margin: 1.5rem 0;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    button {
-      background: #2f5d50;
-      color: white;
-      border: none;
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #244a40;
-    }
+    .hidden { display: none; }
+    .divider { border: none; border-top: 1px solid #e6ece9; margin: 1.25rem 0; }
+    .two { display:grid; grid-template-columns: 1fr; gap: 0.75rem; }
+    @media (min-width: 780px){ .two { grid-template-columns: 1fr 1fr; } }
+    figure { margin: 1rem 0; }
+    figcaption { font-size: 0.9rem; color:#555; margin-top: 0.4rem; }
+    .panel { padding: 0.75rem; background:#fafcfc; border: 1px solid #e6ece9; border-radius: 12px; }
+    .pill { display:inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background:#dfece7; color:#2f5d50; font-size: 0.85rem; }
   </style>
 </head>
 <body>
-
 <header>
   <h1>Eco-Responders: After the Fire</h1>
-  <p>Every wildfire tells two stories: loss and renewal.</p>
+  <div class="small">Prototype test • auto-saves on this device • no logins</div>
 </header>
 
 <main>
-  <p>
-    The air smells faintly of pine and smoke. Just two weeks ago, a wildfire swept through the nearby town of Forest Glen.
-    Your community, Maple Valley, sits just downwind.
-  </p>
-
-  <div class="mission-box">
-    <h2>Your Mission</h2>
-    <ul>
-      <li>Investigate how wildfires start and spread</li>
-      <li>Analyze evidence from weather, land use, and ecosystems</li>
-      <li>Make decisions that help communities rebuild safely</li>
-    </ul>
+  <!-- Priority: gentle reassurance -->
+  <div class="card">
+    <span class="pill">You can revise</span>
+    <p class="small" style="margin:0.5rem 0 0;">
+      Your writing auto-saves on <strong>this device</strong>. Revising your thinking is expected—scientists do it constantly.
+    </p>
   </div>
 
-  <h2>Think Like a Scientist</h2>
-  <p>
-    As you move through this mission, you’ll gather evidence, look for patterns, and explain cause-and-effect relationships —
-    just like real environmental scientists.
-  </p>
+  <!-- STEP 1: embedded prompt + writing box -->
+  <section id="step1">
+    <h2>Step 1: First Look</h2>
+    <p>
+      The air smells faintly of pine and smoke. Two weeks ago, a wildfire swept through Forest Glen.
+      Maple Valley sits just downwind.
+    </p>
 
-  <h2>Ready to Begin?</h2>
-  <p>This is where future decision points and field journal entries will appear.</p>
+    <!-- Priority: images (optional) -->
+    <!-- Create an images folder and upload a file like images/wildfire-banner.jpg -->
+    <!--
+    <figure>
+      <img src="images/wildfire-banner.jpg" alt="Smoke over a forested valley" style="width:100%;max-height:280px;object-fit:cover;border-radius:12px;">
+      <figcaption>Scene context image (optional).</figcaption>
+    </figure>
+    -->
 
-  <button onclick="alert('Mission coming soon!')">
-    Start the Investigation
-  </button>
+    <h3>Prompt 1</h3>
+    <p class="small">What do you think is happening in the ecosystem right now (plants, animals, soil)?</p>
+    <textarea data-save="p1_original" placeholder="Type your first thinking here..."></textarea>
+
+    <div class="row">
+      <button class="btn" data-next="step2">Next</button>
+    </div>
+  </section>
+
+  <!-- STEP 2: evidence + revision visible -->
+  <section id="step2" class="hidden">
+    <h2>Step 2: Evidence Check</h2>
+    <p class="small">
+      You receive an alert: “Dry winds expected. Low humidity. Fire risk remains elevated.”
+    </p>
+
+    <h3>Prompt 2</h3>
+    <p class="small">List 2–3 pieces of evidence you would want (weather, plants, human activity, etc.).</p>
+    <textarea data-save="p2_original" placeholder="Example: wind speed, fuel moisture, recent lightning..."></textarea>
+
+    <hr class="divider" />
+
+    <h3>Revision Moment</h3>
+    <p class="small">
+      Re-read your Step 1 thinking. If you want to revise it using what you know now, write a revised version below.
+      (Your original is kept.)
+    </p>
+
+    <div class="two">
+      <div class="panel">
+        <div class="small"><strong>Your earlier thinking</strong></div>
+        <div id="p1_show" class="small" style="margin-top:0.5rem; white-space: pre-wrap;"></div>
+      </div>
+      <div class="panel">
+        <div class="small"><strong>Your revised thinking</strong></div>
+        <textarea data-save="p1_revised" placeholder="Revise your Step 1 response here (optional)..."></textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn ghost" data-prev="step1">Back</button>
+      <button class="btn" data-next="step3">Next</button>
+    </div>
+  </section>
+
+  <!-- STEP 3: branch-lite choice + export -->
+  <section id="step3" class="hidden">
+    <h2>Step 3: Decision Point</h2>
+    <p class="small">Choose what your team investigates next. (This saves your choice.)</p>
+
+    <div class="row">
+      <button class="btn" data-choice="branch" data-value="weather">Investigate weather patterns</button>
+      <button class="btn" data-choice="branch" data-value="human">Investigate human causes</button>
+      <button class="btn" data-choice="branch" data-value="habitat">Investigate habitat recovery</button>
+    </div>
+
+    <div id="choice_feedback" class="card hidden" style="margin-top:1rem;"></div>
+
+    <hr class="divider" />
+
+    <div class="row">
+      <button class="btn ghost" data-prev="step2">Back</button>
+      <button class="btn secondary" id="exportBtn">Export My Notes</button>
+      <button class="btn ghost" id="resetBtn" title="Clears saved responses on this device">Reset (for testing)</button>
+    </div>
+
+    <p class="small" style="margin-top:0.75rem;">
+      Tip: “Export” copies your responses so students can paste into Canvas (or a Field Journal assignment).
+    </p>
+  </section>
+
+  <script src="app.js"></script>
 </main>
-
-<footer>
-  <p>Cycle 1 Prototype • Built with GitHub</p>
-</footer>
-
 </body>
 </html>
