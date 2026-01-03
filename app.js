@@ -1,3 +1,6 @@
+// --------------------
+// Utilities (storage)
+// --------------------
 function loadSaved(key) {
   return localStorage.getItem(key) || "";
 }
@@ -5,19 +8,35 @@ function save(key, value) {
   localStorage.setItem(key, value);
 }
 
+// --------------------
+// Save Place + Navigation
+// --------------------
 function showStep(stepId) {
-  document.querySelectorAll("section[id^='step']").forEach(sec => {
+  // ✅ SAVE PLACE (this is the key line)
+  save("currentStep", stepId);
+
+  // Show only the active step
+  document.querySelectorAll("section[id^='step']").forEach((sec) => {
     sec.classList.toggle("hidden", sec.id !== stepId);
   });
 
-  // keep revision visible
+  // Keep revision visible when entering step2
   if (stepId === "step2") {
     const p1 = loadSaved("p1_original");
-    document.getElementById("p1_show").textContent = p1 || "(nothing yet)";
+    const p1Show = document.getElementById("p1_show");
+    if (p1Show) p1Show.textContent = p1 || "(nothing yet)";
+  }
+
+  // (Optional) show a little status somewhere if you add it later
+  const status = document.getElementById("resume_status");
+  if (status) {
+    status.textContent = `Saved place: ${stepId}`;
   }
 }
 
+// --------------------
 // Auto-save for all textareas
+// --------------------
 document.querySelectorAll("textarea[data-save]").forEach((ta) => {
   const key = ta.dataset.save;
   ta.value = loadSaved(key);
@@ -25,7 +44,9 @@ document.querySelectorAll("textarea[data-save]").forEach((ta) => {
   ta.addEventListener("input", () => save(key, ta.value));
 });
 
-// Navigation + choices
+// --------------------
+// Click handlers (Next/Back + Choice)
+// --------------------
 document.addEventListener("click", (e) => {
   const next = e.target.closest("[data-next]");
   const prev = e.target.closest("[data-prev]");
@@ -39,27 +60,36 @@ document.addEventListener("click", (e) => {
     save("branch_choice", value);
 
     const box = document.getElementById("choice_feedback");
-    box.classList.remove("hidden");
-
-    const messages = {
-      weather: "✅ Weather track selected. Next, we’ll look at wind + humidity and how they affect fire spread.",
-      human: "✅ Human-cause track selected. Next, we’ll investigate activities that can ignite fires and prevention strategies.",
-      habitat: "✅ Habitat recovery track selected. Next, we’ll examine how plants/animals recover and what supports regrowth."
-    };
-
-    box.innerHTML = `<h3 style="margin-top:0;">Choice saved</h3><p style="margin:0;">${messages[value] || "Choice saved."}</p>`;
+    if (box) {
+      box.classList.remove("hidden");
+      const messages = {
+        weather: "✅ Weather track selected. Next, we’ll look at wind + humidity and how they affect fire spread.",
+        human: "✅ Human-cause track selected. Next, we’ll investigate activities that can ignite fires and prevention strategies.",
+        habitat: "✅ Habitat recovery track selected. Next, we’ll examine how plants/animals recover and what supports regrowth.",
+      };
+      box.innerHTML = `<h3 style="margin-top:0;">Choice saved</h3><p style="margin:0;">${
+        messages[value] || "Choice saved."
+      }</p>`;
+    }
   }
 });
 
+// --------------------
 // Export notes for Canvas
-document.getElementById("exportBtn").addEventListener("click", async () => {
-  const p1_original = loadSaved("p1_original");
-  const p1_revised = loadSaved("p1_revised");
-  const p2_original = loadSaved("p2_original");
-  const branch = loadSaved("branch_choice");
+// --------------------
+const exportBtn = document.getElementById("exportBtn");
+if (exportBtn) {
+  exportBtn.addEventListener("click", async () => {
+    const p1_original = loadSaved("p1_original");
+    const p1_revised = loadSaved("p1_revised");
+    const p2_original = loadSaved("p2_original");
+    const branch = loadSaved("branch_choice");
+    const currentStep = loadSaved("currentStep");
 
-  const text =
-`Eco-Responders Notes (Prototype)
+    const text = `Eco-Responders Notes (Prototype)
+
+Saved Place:
+${currentStep || "(unknown)"}
 
 Step 1 - First Thinking:
 ${p1_original || "(blank)"}
@@ -74,22 +104,34 @@ Decision Track:
 ${branch || "(not selected)"}
 `;
 
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Copied to clipboard! Paste into Canvas or your Field Journal.");
-  } catch {
-    prompt("Copy your notes below:", text);
-  }
-});
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard! Paste into Canvas or your Field Journal.");
+    } catch {
+      // fallback if clipboard permissions are blocked
+      prompt("Copy your notes below:", text);
+    }
+  });
+}
 
-// Reset saved responses (for testing)
-document.getElementById("resetBtn").addEventListener("click", () => {
-  const ok = confirm("This will clear saved responses on this device. Continue?");
-  if (!ok) return;
+// --------------------
+// Reset (for testing)
+// --------------------
+const resetBtn = document.getElementById("resetBtn");
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => {
+    const ok = confirm("This will clear saved responses AND saved place on this device. Continue?");
+    if (!ok) return;
 
-  ["p1_original","p1_revised","p2_original","branch_choice"].forEach(k => localStorage.removeItem(k));
-  location.reload();
-});
+    ["p1_original", "p1_revised", "p2_original", "branch_choice", "currentStep"].forEach((k) =>
+      localStorage.removeItem(k)
+    );
+    location.reload();
+  });
+}
 
-// Start
-showStep("step1");
+// --------------------
+// ✅ Resume on load
+// --------------------
+const savedStep = loadSaved("currentStep") || "step1";
+showStep(savedStep);
