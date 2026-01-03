@@ -5,31 +5,92 @@
   <title>Eco-Responders Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f5f7f6; line-height: 1.6; }
-    header { background:#2f5d50; color:#fff; padding: 1.25rem; }
-    main { max-width: 900px; margin: 0 auto; background: #fff; padding: 1.5rem; }
-    h1,h2,h3 { margin-top: 0; color:#1f3b34; }
+    :root{
+      --green:#2f5d50;
+      --green2:#405a53;
+      --bg:#f5f7f6;
+      --card:#eef5f2;
+      --text:#1f3b34;
+      --muted:#455;
+      --line:#e6ece9;
+    }
+
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: var(--bg); line-height: 1.6; }
+    header { background:var(--green); color:#fff; padding: 1.0rem 1.25rem; position: sticky; top: 0; z-index: 10; }
+    main { max-width: 900px; margin: 0 auto; background: #fff; padding: 1.25rem; }
+
+    h1 { margin: 0; font-size: 1.2rem; }
+    h2,h3 { margin-top: 0; color: var(--text); }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Small right-side save panel */
+    .savePanel{
+      display:flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      align-items: flex-end;
+      min-width: 220px;
+      max-width: 320px;
+    }
+
+    .saveRow{
+      display:flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .btn {
+      background: var(--green); color:#fff; border:none;
+      padding:0.45rem 0.7rem; border-radius: 10px; cursor:pointer;
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+    .btn.secondary { background: var(--green2); }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.7); color:#fff; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .miniInput{
+      width: 100%;
+      min-height: 34px;
+      padding: 0.45rem 0.55rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.55);
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      outline: none;
+    }
+    .miniInput::placeholder{ color: rgba(255,255,255,0.75); }
+
+    .hint{
+      font-size: 0.82rem;
+      opacity: 0.9;
+      margin: 0;
+      text-align: right;
+    }
 
     .card {
-      background:#eef5f2;
-      border-left: 5px solid #2f5d50;
+      background: var(--card);
+      border-left: 5px solid var(--green);
       padding: 1rem;
       margin: 1rem 0;
       border-radius: 12px;
     }
 
-    .small { font-size: 0.92rem; color:#455; }
-    .pill { display:inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background:#dfece7; color:#2f5d50; font-size: 0.85rem; }
+    .small { font-size: 0.92rem; color: var(--muted); }
+    .pill { display:inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background:#dfece7; color: var(--green); font-size: 0.85rem; }
 
     .row { display:flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
-
-    .btn {
-      background:#2f5d50; color:#fff; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;
-      font-size:1rem;
-    }
-    .btn.secondary { background:#405a53; }
-    .btn.ghost { background: transparent; border: 1px solid #2f5d50; color:#2f5d50; }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
     textarea {
       width: 100%;
@@ -42,48 +103,69 @@
     }
 
     .hidden { display: none; }
-    .divider { border: none; border-top: 1px solid #e6ece9; margin: 1.25rem 0; }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 1.25rem 0; }
 
     .two { display:grid; grid-template-columns: 1fr; gap: 0.75rem; }
     @media (min-width: 780px){ .two { grid-template-columns: 1fr 1fr; } }
 
-    .panel { padding: 0.75rem; background:#fafcfc; border: 1px solid #e6ece9; border-radius: 12px; }
+    .panel { padding: 0.75rem; background:#fafcfc; border: 1px solid var(--line); border-radius: 12px; }
 
-    figure { margin: 1rem 0; }
-    figcaption { font-size: 0.9rem; color:#555; margin-top: 0.4rem; }
+    .codeBox{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.92rem;
+      padding: 0.6rem 0.7rem;
+      border: 1px dashed rgba(255,255,255,0.7);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(0,0,0,0.12);
+      width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+
+    /* Make content breathe below sticky header */
+    .spacer{ height: 0.75rem; }
   </style>
 </head>
 
 <body>
 <header>
-  <h1>Eco-Responders: After the Fire</h1>
-  <div class="small">Prototype test • auto-saves on this device • includes Resume Code</div>
+  <div class="topbar">
+    <div>
+      <h1>Eco-Responders: After the Fire</h1>
+      <p class="hint" style="text-align:left; margin-top:0.25rem;">
+        Auto-saves on this device • Use “Save & Exit” to move devices
+      </p>
+    </div>
+
+    <!-- ✅ Your requested UI: Save & Exit top-right + resume input under it -->
+    <div class="savePanel" aria-label="Save and Resume panel">
+      <div class="saveRow">
+        <button class="btn secondary" id="saveExitBtn">Save & Exit</button>
+      </div>
+
+      <input class="miniInput" id="resumeInput" placeholder="Paste Resume Code to continue" />
+
+      <div class="saveRow">
+        <button class="btn ghost" id="resumeBtn">Resume</button>
+        <button class="btn ghost" id="clearResumeBtn" title="Clear the box">Clear</button>
+      </div>
+
+      <!-- Shows a kid-friendly nickname + (optionally) last generated code -->
+      <div id="resumeNick" class="codeBox hidden"></div>
+      <p class="hint" id="resumeMsg"></p>
+    </div>
+  </div>
 </header>
 
+<div class="spacer"></div>
+
 <main>
-  <!-- Priority: gentle reassurance -->
   <div class="card">
     <span class="pill">You can revise</span>
     <p class="small" style="margin:0.5rem 0 0;">
-      Your writing auto-saves on <strong>this device</strong>. Revising your thinking is expected—scientists do it constantly.
+      Your writing auto-saves. Revising your thinking is expected—scientists do it constantly.
     </p>
-  </div>
-
-  <!-- NEW: Resume-from-code panel -->
-  <div class="card" id="resumePanel">
-    <h2 style="margin-top:0;">Return to Your Work</h2>
-    <p class="small" style="margin-top:0;">
-      If you have a <strong>Resume Code</strong>, paste it below to restore your progress (even on a different device).
-    </p>
-
-    <textarea id="resumeInput" placeholder="Paste your Resume Code here..."></textarea>
-
-    <div class="row">
-      <button class="btn" id="resumeBtn">Resume from Code</button>
-      <button class="btn ghost" id="clearResumeInputBtn">Clear</button>
-    </div>
-
-    <p class="small" id="resumeMsg" style="margin:0.5rem 0 0;"></p>
   </div>
 
   <!-- STEP 1 -->
@@ -93,14 +175,6 @@
       The air smells faintly of pine and smoke. Two weeks ago, a wildfire swept through Forest Glen.
       Maple Valley sits just downwind.
     </p>
-
-    <!-- Optional banner image (later)
-    <figure>
-      <img src="images/wildfire-banner.jpg" alt="Smoke over a forested valley"
-           style="width:100%;max-height:280px;object-fit:cover;border-radius:12px;">
-      <figcaption>Scene context image (optional).</figcaption>
-    </figure>
-    -->
 
     <h3>Prompt 1</h3>
     <p class="small">What do you think is happening in the ecosystem right now (plants, animals, soil)?</p>
@@ -114,9 +188,7 @@
   <!-- STEP 2 -->
   <section id="step2" class="hidden">
     <h2>Step 2: Evidence Check</h2>
-    <p class="small">
-      You receive an alert: “Dry winds expected. Low humidity. Fire risk remains elevated.”
-    </p>
+    <p class="small">Alert: “Dry winds expected. Low humidity. Fire risk remains elevated.”</p>
 
     <h3>Prompt 2</h3>
     <p class="small">List 2–3 pieces of evidence you would want (weather, plants, human activity, etc.).</p>
@@ -142,7 +214,7 @@
     </div>
 
     <div class="row">
-      <button class="btn ghost" data-prev="step1">Back</button>
+      <button class="btn ghost" data-prev="step1" style="background:transparent;border:1px solid var(--green);color:var(--green);">Back</button>
       <button class="btn" data-next="step3">Next</button>
     </div>
   </section>
@@ -150,12 +222,12 @@
   <!-- STEP 3 -->
   <section id="step3" class="hidden">
     <h2>Step 3: Decision Point</h2>
-    <p class="small">Choose what your team investigates next. (This saves your choice.)</p>
+    <p class="small">Choose what your team investigates next.</p>
 
     <div class="row">
-      <button class="btn" data-choice="branch" data-value="weather">Investigate weather patterns</button>
-      <button class="btn" data-choice="branch" data-value="human">Investigate human causes</button>
-      <button class="btn" data-choice="branch" data-value="habitat">Investigate habitat recovery</button>
+      <button class="btn" data-choice="branch" data-value="weather">Weather patterns</button>
+      <button class="btn" data-choice="branch" data-value="human">Human causes</button>
+      <button class="btn" data-choice="branch" data-value="habitat">Habitat recovery</button>
     </div>
 
     <div id="choice_feedback" class="card hidden" style="margin-top:1rem;"></div>
@@ -163,19 +235,10 @@
     <hr class="divider" />
 
     <div class="row">
-      <button class="btn ghost" data-prev="step2">Back</button>
-
-      <button class="btn secondary" id="exportBtn">Export My Notes</button>
-
-      <!-- NEW: Save & Exit (creates Resume Code) -->
-      <button class="btn secondary" id="saveExitBtn">Save & Exit</button>
-
-      <button class="btn ghost" id="resetBtn" title="Clears saved responses on this device">Reset (for testing)</button>
+      <button class="btn ghost" data-prev="step2" style="background:transparent;border:1px solid var(--green);color:var(--green);">Back</button>
+      <button class="btn secondary" id="exportBtn">Export Notes</button>
+      <button class="btn ghost" id="resetBtn" style="background:transparent;border:1px solid var(--green);color:var(--green);">Reset</button>
     </div>
-
-    <p class="small" style="margin-top:0.75rem;">
-      Tip: “Save & Exit” creates a Resume Code you can store and use later to restore your work.
-    </p>
   </section>
 
   <script src="app.js"></script>
