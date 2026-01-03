@@ -11,13 +11,11 @@ function removeLocal(key) {
   localStorage.removeItem(key);
 }
 
-// --------------------
-// Keys we save for this prototype
-// --------------------
+// Keys we want to include in the resume payload
 const SAVE_KEYS = ["p1_original", "p1_revised", "p2_original", "branch_choice", "currentStep"];
 
 // --------------------
-// Navigation
+// Step navigation
 // --------------------
 function showStep(stepId) {
   saveLocal("currentStep", stepId);
@@ -34,7 +32,7 @@ function showStep(stepId) {
 }
 
 // --------------------
-// Auto-save textareas
+// Auto-save all textareas with data-save
 // --------------------
 document.querySelectorAll("textarea[data-save]").forEach((ta) => {
   const key = ta.dataset.save;
@@ -43,16 +41,16 @@ document.querySelectorAll("textarea[data-save]").forEach((ta) => {
 });
 
 // --------------------
-// Branch feedback
+// Choice feedback
 // --------------------
 function renderBranchFeedback(value) {
   const box = document.getElementById("choice_feedback");
   if (!box) return;
 
   const messages = {
-    weather: "✅ Weather track selected.",
-    human: "✅ Human-cause track selected.",
-    habitat: "✅ Habitat recovery track selected.",
+    weather: "✅ Weather track selected. Next, we’ll look at wind + humidity and how they affect fire spread.",
+    human: "✅ Human-cause track selected. Next, we’ll investigate activities that can ignite fires and prevention strategies.",
+    habitat: "✅ Habitat recovery track selected. Next, we’ll examine how plants/animals recover and what supports regrowth.",
   };
 
   if (!value) {
@@ -65,7 +63,9 @@ function renderBranchFeedback(value) {
   box.innerHTML = `<h3 style="margin-top:0;">Choice saved</h3><p style="margin:0;">${messages[value] || "Choice saved."}</p>`;
 }
 
-// Choice buttons + Next/Back
+// --------------------
+// Buttons: Next/Back + choice
+// --------------------
 document.addEventListener("click", (e) => {
   const next = e.target.closest("[data-next]");
   const prev = e.target.closest("[data-prev]");
@@ -82,8 +82,21 @@ document.addEventListener("click", (e) => {
 });
 
 // --------------------
-// Export notes (clipboard/prompt)
+// Export notes (clipboard/prompt fallback)
 // --------------------
+const exportBtn = document.getElementById("exportBtn");
+if (exportBtn) {
+  exportBtn.addEventListener("click", async () => {
+    const text = buildNotesText();
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard! Paste into Canvas or your Field Journal.");
+    } catch {
+      prompt("Copy your notes below:", text);
+    }
+  });
+}
+
 function buildNotesText() {
   const p1_original = loadSaved("p1_original");
   const p1_revised = loadSaved("p1_revised");
@@ -110,30 +123,15 @@ ${branch || "(not selected)"}
 `;
 }
 
-const exportBtn = document.getElementById("exportBtn");
-if (exportBtn) {
-  exportBtn.addEventListener("click", async () => {
-    const text = buildNotesText();
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard! Paste into Canvas or your Field Journal.");
-    } catch {
-      prompt("Copy your notes below:", text);
-    }
-  });
-}
-
 // ============================================================
-// Resume Code (no server)
+// ✅ Resume Code + QR (no server)
 // ============================================================
-// NOTE: The code must contain the saved writing. That’s why it’s longer.
-// We keep it copy/paste friendly, not hand-typed.
 
-// Unicode-safe base64 encode/decode
+// Encode/decode (Unicode-safe Base64)
 function encodeState(obj) {
   const json = JSON.stringify(obj);
   const b64 = btoa(unescape(encodeURIComponent(json)));
-  return `SINS1.${b64}`;
+  return `SINS1.${b64}`; // version prefix
 }
 function decodeState(code) {
   if (!code.startsWith("SINS1.")) throw new Error("That code doesn't look like a valid Resume Code.");
@@ -153,66 +151,163 @@ function applyState(state) {
     if (typeof state[k] === "string") saveLocal(k, state[k]);
   }
 
-  // refill boxes
+  // Refill UI textareas
   document.querySelectorAll("textarea[data-save]").forEach((ta) => {
-    ta.value = loadSaved(ta.dataset.save);
+    const key = ta.dataset.save;
+    ta.value = loadSaved(key);
   });
 
-  // restore choice feedback
   renderBranchFeedback(loadSaved("branch_choice"));
 
-  // jump to saved place
   const step = loadSaved("currentStep") || "step1";
   showStep(step);
 }
 
-// ---- Top-right controls ----
+// ----- Kid Code (short label only; NOT used for restore) -----
+function kidCodeFromResumeCode(resumeCode) {
+  // 6-char label derived from the resume code for “receipt” purposes
+  // Not reversible; just helps students confirm they saved.
+  let hash = 0;
+  for (let i = 0; i < resumeCode.length; i++) {
+    hash = (hash * 31 + resumeCode.charCodeAt(i)) >>> 0;
+  }
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no confusing 0/O/1/I
+  let out = "";
+  for (let i = 0; i < 6; i++) {
+    out += alphabet[(hash + i * 17) % alphabet.length];
+    hash = (hash >>> 1) ^ (hash << 1);
+  }
+  return out;
+}
+
+// ----- Modal controls -----
+const backdrop = document.getElementById("saveModalBackdrop");
+const modal = document.getElementById("saveModal");
+const qrDiv = document.getElementById("qr");
+const resumeCodeBox = document.getElementById("resumeCodeBox");
+const resumeLinkBox = document.getElementById("resumeLinkBox");
+const kidCodeEl = document.getElementById("kidCode");
+const copyCodeBtn = document.getElementById("copyCodeBtn");
+const closeSaveModalBtn = document.getElementById("closeSaveModalBtn");
+
+function openSaveModal() {
+  backdrop.style.display = "block";
+  modal.style.display = "block";
+}
+function closeSaveModal() {
+  backdrop.style.display = "none";
+  modal.style.display = "none";
+  if (qrDiv) qrDiv.innerHTML = "";
+}
+
+if (backdrop) backdrop.addEventListener("click", closeSaveModal);
+if (closeSaveModalBtn) closeSaveModalBtn.addEventListener("click", closeSaveModal);
+
+// Save & Exit (top-right widget)
 const saveExitBtnTop = document.getElementById("saveExitBtnTop");
+if (saveExitBtnTop) {
+  saveExitBtnTop.addEventListener("click", async () => {
+    const state = collectState();
+    const resumeCode = encodeState(state);
+
+    // Build a resume link that auto-restores from the URL hash
+    const baseUrl = window.location.origin + window.location.pathname;
+    const resumeUrl = `${baseUrl}#resume=${encodeURIComponent(resumeCode)}`;
+
+    // Fill modal fields
+    resumeCodeBox.value = resumeCode;
+    resumeLinkBox.value = resumeUrl;
+    kidCodeEl.textContent = kidCodeFromResumeCode(resumeCode);
+
+    // Copy automatically (and also show it)
+    try {
+      await navigator.clipboard.writeText(resumeCode);
+      setTopMsg("✅ Saved. Resume Code copied.", true);
+    } catch {
+      setTopMsg("✅ Saved. Copy the code from the popup.", true);
+    }
+
+    // QR code encodes the resume URL (best cross-device UX)
+    if (qrDiv) {
+      qrDiv.innerHTML = "";
+      // qrcode library is loaded in index.html
+      // eslint-disable-next-line no-undef
+      new QRCode(qrDiv, { text: resumeUrl, width: 144, height: 144 });
+    }
+
+    // Copy button in modal
+    if (copyCodeBtn) {
+      copyCodeBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(resumeCode);
+          alert("Resume Code copied!");
+        } catch {
+          prompt("Copy this Resume Code:", resumeCode);
+        }
+      };
+    }
+
+    openSaveModal();
+
+    // Optional: “exit feel” — send them back to step 1 view (or keep them)
+    // showStep(loadSaved("currentStep") || "step1");
+  });
+}
+
+// ----- Resume from Code (top-right) -----
 const resumeInputTop = document.getElementById("resumeInputTop");
 const resumeBtnTop = document.getElementById("resumeBtnTop");
 const clearResumeTop = document.getElementById("clearResumeTop");
 const resumeMsgTop = document.getElementById("resumeMsgTop");
 
-if (clearResumeTop && resumeInputTop && resumeMsgTop) {
+function setTopMsg(text, strong = false) {
+  if (!resumeMsgTop) return;
+  resumeMsgTop.innerHTML = strong ? `<strong>${text}</strong>` : text;
+}
+
+if (clearResumeTop && resumeInputTop) {
   clearResumeTop.addEventListener("click", () => {
     resumeInputTop.value = "";
-    resumeMsgTop.textContent = "";
+    setTopMsg("");
   });
 }
 
-if (saveExitBtnTop && resumeMsgTop) {
-  saveExitBtnTop.addEventListener("click", async () => {
-    const code = encodeState(collectState());
-
-    try {
-      await navigator.clipboard.writeText(code);
-      resumeMsgTop.textContent = "✅ Saved! Resume Code copied. Paste it somewhere safe.";
-    } catch {
-      // fallback: show prompt for manual copy
-      prompt("Copy this Resume Code and save it somewhere safe:", code);
-      resumeMsgTop.textContent = "Saved. Copy the code from the pop-up and keep it safe.";
-    }
-
-    // Optional “exit”: scroll to top so the widget is visible
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-}
-
-if (resumeBtnTop && resumeInputTop && resumeMsgTop) {
+if (resumeBtnTop && resumeInputTop) {
   resumeBtnTop.addEventListener("click", () => {
     try {
       const code = resumeInputTop.value.trim();
       const state = decodeState(code);
       applyState(state);
-      resumeMsgTop.textContent = "✅ Resumed! Your work is back.";
+      setTopMsg("✅ Resumed!", true);
     } catch (err) {
-      resumeMsgTop.textContent = `⚠️ ${err.message}`;
+      setTopMsg(`⚠️ ${err.message}`);
     }
   });
 }
 
+// Auto-resume from URL hash (QR flow)
+function tryResumeFromHash() {
+  const hash = window.location.hash || "";
+  const match = hash.match(/resume=([^&]+)/);
+  if (!match) return false;
+
+  try {
+    const code = decodeURIComponent(match[1]);
+    const state = decodeState(code);
+    applyState(state);
+    setTopMsg("✅ Resumed from QR/link.", true);
+
+    // Clean the URL so the code isn't visible after resuming
+    history.replaceState(null, "", window.location.pathname);
+    return true;
+  } catch (err) {
+    setTopMsg(`⚠️ Could not resume: ${err.message}`);
+    return false;
+  }
+}
+
 // --------------------
-// Reset (testing)
+// Reset (for testing)
 // --------------------
 const resetBtn = document.getElementById("resetBtn");
 if (resetBtn) {
@@ -225,6 +320,13 @@ if (resetBtn) {
   });
 }
 
-// Start (device autosave resume)
-renderBranchFeedback(loadSaved("branch_choice"));
-showStep(loadSaved("currentStep") || "step1");
+// --------------------
+// Start
+// --------------------
+const resumedFromHash = tryResumeFromHash();
+
+if (!resumedFromHash) {
+  const savedStep = loadSaved("currentStep") || "step1";
+  showStep(savedStep);
+  renderBranchFeedback(loadSaved("branch_choice"));
+}
