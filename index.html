@@ -10,24 +10,19 @@
     main { max-width: 900px; margin: 0 auto; background: #fff; padding: 1.5rem; }
     h1,h2,h3 { margin-top: 0; color:#1f3b34; }
 
-    .card {
-      background:#eef5f2;
-      border-left: 5px solid #2f5d50;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 12px;
-    }
+    .card { background:#eef5f2; border-left: 5px solid #2f5d50; padding: 1rem; margin: 1rem 0; border-radius: 12px; }
     .small { font-size: 0.92rem; color:#455; }
     .pill { display:inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background:#dfece7; color:#2f5d50; font-size: 0.85rem; }
-    .row { display:flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.6rem; align-items: center; }
+
+    .row { display:flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.75rem; align-items: center; }
 
     .btn {
-      background:#2f5d50; color:#fff; border:none; padding:0.55rem 0.85rem; border-radius:10px; cursor:pointer;
-      font-size:0.95rem;
+      background:#2f5d50; color:#fff; border:none; padding:0.55rem 0.9rem; border-radius:10px; cursor:pointer;
+      font-size:1rem;
     }
     .btn.secondary { background:#405a53; }
     .btn.ghost { background: transparent; border: 1px solid #2f5d50; color:#2f5d50; }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.small { padding: 0.35rem 0.6rem; font-size: 0.92rem; border-radius: 9px; }
 
     textarea {
       width: 100%;
@@ -38,66 +33,76 @@
       font-size: 1rem;
       box-sizing: border-box;
     }
+
     .hidden { display: none; }
     .divider { border: none; border-top: 1px solid #e6ece9; margin: 1.25rem 0; }
+
     .two { display:grid; grid-template-columns: 1fr; gap: 0.75rem; }
     @media (min-width: 780px){ .two { grid-template-columns: 1fr 1fr; } }
+
     .panel { padding: 0.75rem; background:#fafcfc; border: 1px solid #e6ece9; border-radius: 12px; }
 
-    /* --- Top-right small control panel --- */
-    #topRightTools {
+    /* ===== Top-right mini save panel ===== */
+    .savePanel {
       position: fixed;
-      top: 10px;
-      right: 10px;
-      width: min(320px, calc(100vw - 20px));
-      background: rgba(255,255,255,0.95);
-      border: 1px solid #dbe6e1;
+      top: 12px;
+      right: 12px;
+      width: min(320px, calc(100vw - 24px));
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe6e2;
       border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-      padding: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+      padding: 0.7rem;
       z-index: 9999;
+      backdrop-filter: blur(4px);
     }
-    #topRightTools .tiny {
-      font-size: 0.85rem;
-      color:#344;
-      margin: 0.35rem 0 0;
-    }
-    #resumeInput {
-      min-height: 44px;
-      padding: 0.5rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-    }
-    #saveOutputWrap {
-      margin-top: 0.6rem;
-      border-top: 1px solid #e6ece9;
-      padding-top: 0.6rem;
-    }
-    .codeBox {
+    .savePanel h4 { margin: 0 0 0.4rem; font-size: 0.95rem; color:#1f3b34; }
+    .savePanel .hint { margin: 0.35rem 0 0; font-size: 0.82rem; color:#455; }
+    .savePanel input {
       width: 100%;
-      min-height: 44px;
-      padding: 0.5rem;
+      padding: 0.45rem 0.55rem;
       border-radius: 10px;
-      border: 1px dashed #9fb9b0;
-      background: #f7fbf9;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 0.9rem;
+      border: 1px solid #cfd8d5;
+      font-size: 0.92rem;
       box-sizing: border-box;
-      white-space: pre-wrap;
-      word-break: break-word;
     }
-    #qrBox {
-      margin-top: 0.6rem;
-      display: grid;
-      place-items: center;
-      background: #ffffff;
-      border: 1px solid #e6ece9;
+
+    /* ===== Modal ===== */
+    .modalBackdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 10000;
+    }
+    .modalBackdrop.show { display: flex; }
+    .modal {
+      width: min(720px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 12px 44px rgba(0,0,0,0.25);
+    }
+    .modalHeader { display:flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .modalHeader h3 { margin: 0; }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.9rem;
+      word-break: break-all;
+      background: #f6f9f8;
+      border: 1px solid #e3ece8;
+      border-radius: 10px;
+      padding: 0.6rem;
+    }
+    .qrBox {
+      width: 220px; height: 220px;
+      border: 1px dashed #cfd8d5;
       border-radius: 12px;
-      padding: 8px;
-    }
-    #qr {
-      width: 180px;
-      height: 180px;
+      display:flex; align-items:center; justify-content:center;
+      background:#fbfdfc;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -105,39 +110,24 @@
 <body>
 <header>
   <h1>Eco-Responders: After the Fire</h1>
-  <div class="small">Prototype • auto-saves • Save & Exit creates codes + QR</div>
+  <div class="small">Prototype • auto-saves • Save & Exit makes a Resume QR for switching devices</div>
 </header>
 
-<!-- TOP RIGHT: Save & Exit + Resume -->
-<div id="topRightTools" aria-label="Save and resume tools">
+<!-- Top-right save/resume panel -->
+<div class="savePanel" aria-label="Save and resume panel">
+  <h4>Save & Resume</h4>
   <div class="row" style="margin-top:0;">
-    <button class="btn secondary" id="saveExitBtn" title="Creates a code (and QR) to resume later">Save & Exit</button>
-    <button class="btn ghost" id="resetBtn" title="Clears saved work on this device">Reset</button>
+    <button class="btn small secondary" id="saveExitBtnTop">Save & Exit</button>
+    <button class="btn small ghost" id="resetBtnTop" title="Clears saved work on this device">Reset</button>
   </div>
 
-  <div class="tiny"><strong>Resume</strong> (paste code and press Resume):</div>
-  <textarea id="resumeInput" placeholder="Paste Transfer Code here (or Short Code on same device)..."></textarea>
-  <div class="row">
-    <button class="btn" id="resumeBtn">Resume</button>
-    <button class="btn ghost" id="clearResumeInputBtn">Clear</button>
-  </div>
-  <div class="tiny" id="resumeMsg"></div>
-
-  <!-- Appears after Save & Exit -->
-  <div id="saveOutputWrap" class="hidden">
-    <div class="tiny"><strong>Short Code</strong> (same device only):</div>
-    <div id="shortCodeBox" class="codeBox"></div>
-
-    <div class="tiny" style="margin-top:0.5rem;"><strong>Transfer Code</strong> (works on any device) — copied for you:</div>
-    <div id="transferCodeBox" class="codeBox"></div>
-    <div class="row">
-      <button class="btn" id="copyTransferBtn">Copy Transfer Code</button>
+  <div style="margin-top:0.55rem;">
+    <input id="resumeInputTop" placeholder="Paste Resume Code or scan QR on this device" />
+    <div class="row" style="margin-top:0.45rem;">
+      <button class="btn small" id="resumeBtnTop">Resume</button>
+      <button class="btn small ghost" id="clearResumeInputBtnTop">Clear</button>
     </div>
-
-    <div class="tiny" style="margin-top:0.5rem;"><strong>QR Code</strong> (scan to resume on another device):</div>
-    <div id="qrBox">
-      <div id="qr"></div>
-    </div>
+    <p class="hint" id="resumeMsgTop"></p>
   </div>
 </div>
 
@@ -145,7 +135,7 @@
   <div class="card">
     <span class="pill">You can revise</span>
     <p class="small" style="margin:0.5rem 0 0;">
-      Your writing auto-saves on <strong>this device</strong>. Use <strong>Save & Exit</strong> if you might switch devices.
+      Your writing auto-saves on <strong>this device</strong>. Use <strong>Save & Exit</strong> only if you need to switch devices.
     </p>
   </div>
 
@@ -169,9 +159,7 @@
   <!-- STEP 2 -->
   <section id="step2" class="hidden">
     <h2>Step 2: Evidence Check</h2>
-    <p class="small">
-      You receive an alert: “Dry winds expected. Low humidity. Fire risk remains elevated.”
-    </p>
+    <p class="small">Alert: “Dry winds expected. Low humidity. Fire risk remains elevated.”</p>
 
     <h3>Prompt 2</h3>
     <p class="small">List 2–3 pieces of evidence you would want (weather, plants, human activity, etc.).</p>
@@ -221,13 +209,54 @@
       <button class="btn ghost" data-prev="step2">Back</button>
       <button class="btn secondary" id="exportBtn">Export My Notes</button>
     </div>
+
+    <p class="small" style="margin-top:0.75rem;">
+      Reminder: Your work auto-saves. Use <strong>Save & Exit</strong> only if you need to move to another device.
+    </p>
   </section>
-
-  <!-- Libraries used for SHORT transfer code + QR (no server needed) -->
-  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <script src="app.js"></script>
 </main>
+
+<!-- Save modal -->
+<div class="modalBackdrop" id="saveModalBackdrop" role="dialog" aria-modal="true" aria-label="Save and exit modal">
+  <div class="modal">
+    <div class="modalHeader">
+      <h3>Saved! Use this to continue later</h3>
+      <button class="btn small ghost" id="closeModalBtn">Close</button>
+    </div>
+
+    <div class="two" style="margin-top:0.75rem;">
+      <div>
+        <p class="small" style="margin:0 0 0.35rem;"><strong>Resume QR (best for kids)</strong></p>
+        <div class="qrBox" id="qrBox"></div>
+        <p class="small" style="margin:0.5rem 0 0;">
+          Scan this on the next device to reopen the lesson <em>and</em> restore progress.
+        </p>
+      </div>
+
+      <div>
+        <p class="small" style="margin:0 0 0.35rem;"><strong>Resume Code</strong> (for adults to paste)</p>
+        <div class="mono" id="resumeCodeBox"></div>
+
+        <div class="row">
+          <button class="btn small secondary" id="copyCodeBtn">Copy Code</button>
+          <button class="btn small" id="copyLinkBtn">Copy Resume Link</button>
+        </div>
+
+        <p class="small" style="margin:0.65rem 0 0.35rem;"><strong>Resume Link</strong></p>
+        <div class="mono" id="resumeLinkBox"></div>
+
+        <p class="small" style="margin-top:0.65rem;">
+          If copy is blocked, you can manually select and copy the code/link above.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries (no server needed) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script src="app.js"></script>
 </body>
 </html>
