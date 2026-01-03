@@ -11,175 +11,141 @@
     h1,h2,h3 { margin-top: 0; color:#1f3b34; }
 
     .card {
-      background:#eef5f2; border-left: 5px solid #2f5d50;
-      padding: 1rem; margin: 1rem 0; border-radius: 12px;
+      background:#eef5f2;
+      border-left: 5px solid #2f5d50;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 12px;
     }
     .small { font-size: 0.92rem; color:#455; }
     .pill { display:inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background:#dfece7; color:#2f5d50; font-size: 0.85rem; }
-
-    .row { display:flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .row { display:flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.6rem; align-items: center; }
 
     .btn {
-      background:#2f5d50; color:#fff; border:none; padding:0.6rem 1rem;
-      border-radius:10px; cursor:pointer; font-size:1rem;
+      background:#2f5d50; color:#fff; border:none; padding:0.55rem 0.85rem; border-radius:10px; cursor:pointer;
+      font-size:0.95rem;
     }
     .btn.secondary { background:#405a53; }
     .btn.ghost { background: transparent; border: 1px solid #2f5d50; color:#2f5d50; }
     .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
     textarea {
-      width: 100%; min-height: 120px; padding: 0.75rem; border-radius: 12px;
-      border: 1px solid #cfd8d5; font-size: 1rem; box-sizing: border-box;
+      width: 100%;
+      min-height: 120px;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid #cfd8d5;
+      font-size: 1rem;
+      box-sizing: border-box;
     }
-
     .hidden { display: none; }
     .divider { border: none; border-top: 1px solid #e6ece9; margin: 1.25rem 0; }
-
     .two { display:grid; grid-template-columns: 1fr; gap: 0.75rem; }
     @media (min-width: 780px){ .two { grid-template-columns: 1fr 1fr; } }
     .panel { padding: 0.75rem; background:#fafcfc; border: 1px solid #e6ece9; border-radius: 12px; }
 
-    /* ---------- Compact Save/Resume widget (top-right) ---------- */
-    #saveWidget {
-      position: fixed; top: 12px; right: 12px;
-      width: 260px;
-      background: rgba(255,255,255,0.96);
-      border: 1px solid #d8e3df;
+    /* --- Top-right small control panel --- */
+    #topRightTools {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: min(320px, calc(100vw - 20px));
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #dbe6e1;
       border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
       padding: 10px;
       z-index: 9999;
     }
-    #saveWidget .label { font-size: 0.8rem; color:#345; margin: 0 0 6px; }
-    #saveWidget button { width: 100%; padding: 0.5rem 0.75rem; border-radius: 10px; }
-    #saveWidget input {
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: 8px;
-      padding: 0.45rem 0.55rem;
+    #topRightTools .tiny {
+      font-size: 0.85rem;
+      color:#344;
+      margin: 0.35rem 0 0;
+    }
+    #resumeInput {
+      min-height: 44px;
+      padding: 0.5rem;
       border-radius: 10px;
-      border: 1px solid #cfd8d5;
       font-size: 0.95rem;
     }
-    #saveWidget .minirow {
-      display: flex; gap: 8px; margin-top: 8px;
+    #saveOutputWrap {
+      margin-top: 0.6rem;
+      border-top: 1px solid #e6ece9;
+      padding-top: 0.6rem;
     }
-    #saveWidget .minirow button {
-      width: 50%;
-      padding: 0.45rem 0.55rem;
-      font-size: 0.95rem;
-    }
-    #saveWidget .msg { margin-top: 6px; font-size: 0.82rem; color:#455; }
-    #saveWidget .msg strong { color:#1f3b34; }
-
-    /* QR + code modal panel */
-    #saveModalBackdrop {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.35);
-      z-index: 9998;
-      display: none;
-    }
-    #saveModal {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: min(92vw, 520px);
-      background: #fff;
-      border-radius: 14px;
-      border: 1px solid #d8e3df;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      padding: 14px;
-      z-index: 9999;
-      display: none;
-    }
-    #saveModal h3 { margin: 0 0 6px; }
-    #saveModal .codeBox {
+    .codeBox {
       width: 100%;
-      box-sizing: border-box;
-      padding: 0.6rem 0.65rem;
+      min-height: 44px;
+      padding: 0.5rem;
       border-radius: 10px;
-      border: 1px solid #cfd8d5;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      border: 1px dashed #9fb9b0;
+      background: #f7fbf9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size: 0.9rem;
-      margin: 8px 0;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-    #qrWrap {
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-    #qr {
-      width: 160px;
-      height: 160px;
+    #qrBox {
+      margin-top: 0.6rem;
+      display: grid;
+      place-items: center;
+      background: #ffffff;
       border: 1px solid #e6ece9;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 8px;
     }
-    #saveModal .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    #qr {
+      width: 180px;
+      height: 180px;
+    }
   </style>
 </head>
 
 <body>
 <header>
   <h1>Eco-Responders: After the Fire</h1>
-  <div class="small">Prototype • auto-save + Resume Code + QR</div>
+  <div class="small">Prototype • auto-saves • Save & Exit creates codes + QR</div>
 </header>
 
-<!-- Compact widget pinned top-right -->
-<div id="saveWidget" aria-label="Save and Resume">
-  <div class="label"><strong>Save & return later</strong></div>
-
-  <button class="btn secondary" id="saveExitBtnTop">Save & Exit</button>
-
-  <input id="resumeInputTop" placeholder="Paste Resume Code…" autocomplete="off" />
-
-  <div class="minirow">
-    <button class="btn" id="resumeBtnTop">Resume</button>
-    <button class="btn ghost" id="clearResumeTop">Clear</button>
+<!-- TOP RIGHT: Save & Exit + Resume -->
+<div id="topRightTools" aria-label="Save and resume tools">
+  <div class="row" style="margin-top:0;">
+    <button class="btn secondary" id="saveExitBtn" title="Creates a code (and QR) to resume later">Save & Exit</button>
+    <button class="btn ghost" id="resetBtn" title="Clears saved work on this device">Reset</button>
   </div>
 
-  <div class="msg" id="resumeMsgTop"></div>
-</div>
-
-<!-- Save modal (shows QR + code to copy) -->
-<div id="saveModalBackdrop"></div>
-<div id="saveModal" role="dialog" aria-modal="true" aria-label="Saved work">
-  <h3>Saved!</h3>
-  <div class="small">
-    Best for 3rd–5th grade: scan the QR code to resume on another device.
-    Your Resume Code is also copied automatically.
+  <div class="tiny"><strong>Resume</strong> (paste code and press Resume):</div>
+  <textarea id="resumeInput" placeholder="Paste Transfer Code here (or Short Code on same device)..."></textarea>
+  <div class="row">
+    <button class="btn" id="resumeBtn">Resume</button>
+    <button class="btn ghost" id="clearResumeInputBtn">Clear</button>
   </div>
+  <div class="tiny" id="resumeMsg"></div>
 
-  <div id="qrWrap" style="margin-top:10px;">
-    <div>
-      <div class="small"><strong>QR to Resume</strong></div>
+  <!-- Appears after Save & Exit -->
+  <div id="saveOutputWrap" class="hidden">
+    <div class="tiny"><strong>Short Code</strong> (same device only):</div>
+    <div id="shortCodeBox" class="codeBox"></div>
+
+    <div class="tiny" style="margin-top:0.5rem;"><strong>Transfer Code</strong> (works on any device) — copied for you:</div>
+    <div id="transferCodeBox" class="codeBox"></div>
+    <div class="row">
+      <button class="btn" id="copyTransferBtn">Copy Transfer Code</button>
+    </div>
+
+    <div class="tiny" style="margin-top:0.5rem;"><strong>QR Code</strong> (scan to resume on another device):</div>
+    <div id="qrBox">
       <div id="qr"></div>
-      <div class="small" style="margin-top:6px;">
-        Kid Code: <strong id="kidCode">------</strong>
-      </div>
     </div>
-
-    <div style="flex:1; min-width: 260px;">
-      <div class="small"><strong>Resume Code (copied)</strong></div>
-      <input class="codeBox" id="resumeCodeBox" readonly />
-      <div class="small"><strong>Or open this link:</strong></div>
-      <input class="codeBox" id="resumeLinkBox" readonly />
-    </div>
-  </div>
-
-  <div class="actions">
-    <button class="btn" id="copyCodeBtn">Copy Code</button>
-    <button class="btn ghost" id="closeSaveModalBtn">Close</button>
   </div>
 </div>
 
 <main>
-  <!-- Gentle reassurance -->
   <div class="card">
     <span class="pill">You can revise</span>
     <p class="small" style="margin:0.5rem 0 0;">
-      Your writing auto-saves on <strong>this device</strong>. Revising your thinking is expected—scientists do it constantly.
+      Your writing auto-saves on <strong>this device</strong>. Use <strong>Save & Exit</strong> if you might switch devices.
     </p>
   </div>
 
@@ -254,16 +220,13 @@
     <div class="row">
       <button class="btn ghost" data-prev="step2">Back</button>
       <button class="btn secondary" id="exportBtn">Export My Notes</button>
-      <button class="btn ghost" id="resetBtn" title="Clears saved responses on this device">Reset (for testing)</button>
     </div>
-
-    <p class="small" style="margin-top:0.75rem;">
-      Tip: Click <strong>Save & Exit</strong> (top-right) to get a Resume Code + QR code.
-    </p>
   </section>
 
-  <!-- QR library + app -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Libraries used for SHORT transfer code + QR (no server needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
   <script src="app.js"></script>
 </main>
 </body>
