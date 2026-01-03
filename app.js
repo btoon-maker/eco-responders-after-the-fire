@@ -1,16 +1,24 @@
-// --------------------
-// Storage helpers
-// --------------------
-function loadSaved(key) { return localStorage.getItem(key) || ""; }
-function saveLocal(key, value) { localStorage.setItem(key, value); }
-function removeLocal(key) { localStorage.removeItem(key); }
-
-// Keys we want to persist
+// =====================
+// Keys we save
+// =====================
 const SAVE_KEYS = ["p1_original", "p1_revised", "p2_original", "branch_choice", "currentStep"];
 
-// --------------------
-// Navigation + Save Place
-// --------------------
+// =====================
+// Local storage helpers
+// =====================
+function loadSaved(key) {
+  return localStorage.getItem(key) || "";
+}
+function saveLocal(key, value) {
+  localStorage.setItem(key, value);
+}
+function removeLocal(key) {
+  localStorage.removeItem(key);
+}
+
+// =====================
+// Navigation / save place
+// =====================
 function showStep(stepId) {
   saveLocal("currentStep", stepId);
 
@@ -23,25 +31,20 @@ function showStep(stepId) {
     const p1Show = document.getElementById("p1_show");
     if (p1Show) p1Show.textContent = p1 || "(nothing yet)";
   }
-
-  // If branch exists and we're on step3, show feedback
-  if (stepId === "step3") {
-    renderBranchFeedback(loadSaved("branch_choice"));
-  }
 }
 
-// --------------------
-// Auto-save for textareas
-// --------------------
+// =====================
+// Auto-save textareas
+// =====================
 document.querySelectorAll("textarea[data-save]").forEach((ta) => {
   const key = ta.dataset.save;
   ta.value = loadSaved(key);
   ta.addEventListener("input", () => saveLocal(key, ta.value));
 });
 
-// --------------------
-// Branch choice feedback
-// --------------------
+// =====================
+// Branch feedback
+// =====================
 function renderBranchFeedback(value) {
   const box = document.getElementById("choice_feedback");
   if (!box) return;
@@ -62,9 +65,9 @@ function renderBranchFeedback(value) {
   box.innerHTML = `<h3 style="margin-top:0;">Choice saved</h3><p style="margin:0;">${messages[value] || "Choice saved."}</p>`;
 }
 
-// --------------------
-// Next/Back + Choice buttons
-// --------------------
+// =====================
+// Next/Back + choices
+// =====================
 document.addEventListener("click", (e) => {
   const next = e.target.closest("[data-next]");
   const prev = e.target.closest("[data-prev]");
@@ -80,9 +83,9 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// --------------------
-// Export notes (still useful for Canvas)
-// --------------------
+// =====================
+// Export notes (still useful)
+// =====================
 const exportBtn = document.getElementById("exportBtn");
 if (exportBtn) {
   exportBtn.addEventListener("click", async () => {
@@ -122,45 +125,58 @@ ${branch || "(not selected)"}
 `;
 }
 
-// ============================================================
-// ✅ Two-tier saving
-// - Auto-save on device (already happening)
-// - Save & Exit gives:
-//   1) Short Code (6–8) = SAME DEVICE ONLY
-//   2) Transfer Code + QR = WORKS ACROSS DEVICES (no server)
-// ============================================================
-
-// --- Short Code (same device) ---
-const SHORT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // avoids confusing chars
-function makeShortCode(len = 6) {
-  let out = "";
-  const arr = new Uint32Array(len);
-  crypto.getRandomValues(arr);
-  for (let i = 0; i < len; i++) out += SHORT_ALPHABET[arr[i] % SHORT_ALPHABET.length];
-  return out;
-}
-function shortKey(code) { return `SINS_SHORT_${code}`; }
-
-// --- Transfer Code (across devices) ---
-// We compress JSON -> encoded URI component string to keep it as short as possible
+// =====================================================
+// Resume Code (no server): store progress inside the code
+// - We compress JSON -> URL-safe string
+// - QR encodes a full resume URL (lesson + code)
+// =====================================================
 function collectState() {
   const state = {};
   for (const k of SAVE_KEYS) state[k] = loadSaved(k);
   return state;
 }
 
-function makeTransferCode(state) {
-  // Prefix with version for future-proofing
-  const json = JSON.stringify(state);
-  const packed = LZString.compressToEncodedURIComponent(json);
-  return `T1-${packed}`;
+function encodeStateToCode(stateObj) {
+  const json = JSON.stringify(stateObj);
+  // compress to URL-safe string
+  const compressed = LZString.compressToEncodedURIComponent(json);
+  // version prefix so you can change formats later safely
+  return `R1.${compressed}`;
 }
 
-function decodeTransferCode(code) {
-  if (!code.startsWith("T1-")) throw new Error("That doesn't look like a Transfer Code.");
-  const packed = code.slice(3);
-  const json = LZString.decompressFromEncodedURIComponent(packed);
-  if (!json) throw new Error("Could not read that Transfer Code.");
+function decodeCodeToState(code) {
+  const trimmed = (code || "").trim();
+
+  // Accept: full URL, or just hash, or just code
+  // If it's a URL with #r=..., extract r
+  let raw = trimmed;
+
+  try {
+    const url = new URL(trimmed);
+    raw = url.hash || ""; // includes leading '#'
+  } catch {
+    // not a full URL, continue
+  }
+
+  // If it contains #r= or r=, extract
+  if (raw.includes("r=")) {
+    const hash = raw.startsWith("#") ? raw.slice(1) : raw;
+    const params = new URLSearchParams(hash);
+    raw = params.get("r") || trimmed;
+  }
+
+  // Now raw should be the code (R1.xxx or xxx)
+  const codeOnly = raw.startsWith("R1.") ? raw : raw.trim();
+
+  if (!codeOnly.startsWith("R1.")) {
+    throw new Error("That doesn’t look like a valid Resume Code.");
+  }
+
+  const payload = codeOnly.slice(3);
+  const json = LZString.decompressFromEncodedURIComponent(payload);
+
+  if (!json) throw new Error("Resume Code could not be read (maybe it was cut off).");
+
   return JSON.parse(json);
 }
 
@@ -169,161 +185,179 @@ function applyState(state) {
     if (typeof state[k] === "string") saveLocal(k, state[k]);
   }
 
-  // Refill textareas currently on screen
+  // Refill any visible fields
   document.querySelectorAll("textarea[data-save]").forEach((ta) => {
     const key = ta.dataset.save;
     ta.value = loadSaved(key);
   });
 
-  // Restore branch feedback if needed
   renderBranchFeedback(loadSaved("branch_choice"));
 
-  // Go to saved place
   const step = loadSaved("currentStep") || "step1";
   showStep(step);
 }
 
-// --------------------
-// Save & Exit UI outputs + QR
-// --------------------
-const saveExitBtn = document.getElementById("saveExitBtn");
-const saveOutputWrap = document.getElementById("saveOutputWrap");
-const shortCodeBox = document.getElementById("shortCodeBox");
-const transferCodeBox = document.getElementById("transferCodeBox");
-const copyTransferBtn = document.getElementById("copyTransferBtn");
-let qrInstance = null;
+// Build a resume URL that includes lesson + resume code in the hash
+function buildResumeUrl(codeOnly) {
+  const base = `${location.origin}${location.pathname}`;
+  const params = new URLSearchParams();
+  params.set("r", codeOnly);
+  return `${base}#${params.toString()}`;
+}
 
-async function copyToClipboard(text) {
+// =====================
+// Top-right panel controls
+// =====================
+const saveExitBtnTop = document.getElementById("saveExitBtnTop");
+const resetBtnTop = document.getElementById("resetBtnTop");
+const resumeInputTop = document.getElementById("resumeInputTop");
+const resumeBtnTop = document.getElementById("resumeBtnTop");
+const clearResumeInputBtnTop = document.getElementById("clearResumeInputBtnTop");
+const resumeMsgTop = document.getElementById("resumeMsgTop");
+
+// Modal elements
+const backdrop = document.getElementById("saveModalBackdrop");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const qrBox = document.getElementById("qrBox");
+const resumeCodeBox = document.getElementById("resumeCodeBox");
+const resumeLinkBox = document.getElementById("resumeLinkBox");
+const copyCodeBtn = document.getElementById("copyCodeBtn");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
+
+function openModal() {
+  backdrop.classList.add("show");
+}
+function closeModal() {
+  backdrop.classList.remove("show");
+}
+
+if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
+if (backdrop) backdrop.addEventListener("click", (e) => {
+  if (e.target === backdrop) closeModal();
+});
+
+// Save & Exit: generate code + link + QR + copy
+if (saveExitBtnTop) {
+  saveExitBtnTop.addEventListener("click", async () => {
+    const state = collectState();
+    const code = encodeStateToCode(state);
+    const resumeUrl = buildResumeUrl(code);
+
+    // Fill modal text
+    resumeCodeBox.textContent = code;
+    resumeLinkBox.textContent = resumeUrl;
+
+    // Build QR (lesson + resume code)
+    qrBox.innerHTML = "";
+    // qrcodejs renders into the element
+    new QRCode(qrBox, {
+      text: resumeUrl,
+      width: 210,
+      height: 210,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    openModal();
+
+    // Auto-copy the resume URL (best chance to work)
+    try {
+      await navigator.clipboard.writeText(resumeUrl);
+      if (resumeMsgTop) resumeMsgTop.textContent = "✅ Saved. Resume link copied!";
+    } catch {
+      if (resumeMsgTop) resumeMsgTop.textContent = "Saved! If copy didn’t work, use the Copy buttons in the popup.";
+    }
+  });
+}
+
+// Copy buttons in modal
+if (copyCodeBtn) {
+  copyCodeBtn.addEventListener("click", async () => {
+    const code = resumeCodeBox.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(code);
+      alert("Resume Code copied!");
+    } catch {
+      prompt("Copy this Resume Code:", code);
+    }
+  });
+}
+
+if (copyLinkBtn) {
+  copyLinkBtn.addEventListener("click", async () => {
+    const link = resumeLinkBox.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(link);
+      alert("Resume Link copied!");
+    } catch {
+      prompt("Copy this Resume Link:", link);
+    }
+  });
+}
+
+// Resume from pasted code/link/url
+if (resumeBtnTop) {
+  resumeBtnTop.addEventListener("click", () => {
+    try {
+      const text = (resumeInputTop.value || "").trim();
+      const state = decodeCodeToState(text);
+      applyState(state);
+      if (resumeMsgTop) resumeMsgTop.textContent = "✅ Resumed! Your work was restored.";
+    } catch (err) {
+      if (resumeMsgTop) resumeMsgTop.textContent = `⚠️ ${err.message}`;
+    }
+  });
+}
+
+if (clearResumeInputBtnTop) {
+  clearResumeInputBtnTop.addEventListener("click", () => {
+    resumeInputTop.value = "";
+    if (resumeMsgTop) resumeMsgTop.textContent = "";
+  });
+}
+
+// Reset on this device
+if (resetBtnTop) {
+  resetBtnTop.addEventListener("click", () => {
+    const ok = confirm("This clears saved work on THIS device. Continue?");
+    if (!ok) return;
+
+    SAVE_KEYS.forEach(removeLocal);
+    // also clear URL resume hash if present
+    history.replaceState(null, "", `${location.origin}${location.pathname}`);
+    location.reload();
+  });
+}
+
+// =====================
+// Auto-resume from URL hash (#r=...)
+// This is what makes QR cross-device work with no server.
+// =====================
+function tryResumeFromHash() {
+  const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+  if (!hash) return false;
+
+  const params = new URLSearchParams(hash);
+  const code = params.get("r");
+  if (!code) return false;
+
   try {
-    await navigator.clipboard.writeText(text);
+    const state = decodeCodeToState(code);
+    applyState(state);
+    if (resumeMsgTop) resumeMsgTop.textContent = "✅ Resumed from QR/link!";
     return true;
   } catch {
     return false;
   }
 }
 
-function renderQR(text) {
-  const qrEl = document.getElementById("qr");
-  if (!qrEl) return;
-  qrEl.innerHTML = ""; // clear
-  qrInstance = new QRCode(qrEl, {
-    text,
-    width: 180,
-    height: 180,
-    correctLevel: QRCode.CorrectLevel.M
-  });
-}
-
-if (saveExitBtn) {
-  saveExitBtn.addEventListener("click", async () => {
-    const state = collectState();
-
-    // 1) Same-device short code
-    const short = makeShortCode(6);
-    saveLocal(shortKey(short), JSON.stringify(state));
-
-    // 2) Cross-device transfer code
-    const transfer = makeTransferCode(state);
-
-    // Show outputs
-    if (saveOutputWrap) saveOutputWrap.classList.remove("hidden");
-    if (shortCodeBox) shortCodeBox.textContent = short;
-    if (transferCodeBox) transferCodeBox.textContent = transfer;
-
-    // Auto-copy transfer code
-    const copied = await copyToClipboard(transfer);
-
-    // Always generate QR
-    renderQR(transfer);
-
-    // Friendly message
-    alert(
-      copied
-        ? "Saved! Transfer Code copied.\nIf switching devices, use the Transfer Code or scan the QR."
-        : "Saved!\nClipboard was blocked, so use the Copy button or scan the QR."
-    );
-  });
-}
-
-if (copyTransferBtn) {
-  copyTransferBtn.addEventListener("click", async () => {
-    const transfer = (transferCodeBox?.textContent || "").trim();
-    if (!transfer) return alert("No Transfer Code yet. Click Save & Exit first.");
-    const ok = await copyToClipboard(transfer);
-    alert(ok ? "Transfer Code copied!" : "Clipboard blocked—highlight and copy the Transfer Code manually.");
-  });
-}
-
-// --------------------
-// Resume UI (accepts either Short Code or Transfer Code)
-// --------------------
-const resumeBtn = document.getElementById("resumeBtn");
-const resumeInput = document.getElementById("resumeInput");
-const resumeMsg = document.getElementById("resumeMsg");
-const clearResumeInputBtn = document.getElementById("clearResumeInputBtn");
-
-function setResumeMsg(text) {
-  if (resumeMsg) resumeMsg.textContent = text;
-}
-
-if (clearResumeInputBtn && resumeInput) {
-  clearResumeInputBtn.addEventListener("click", () => {
-    resumeInput.value = "";
-    setResumeMsg("");
-  });
-}
-
-if (resumeBtn && resumeInput) {
-  resumeBtn.addEventListener("click", () => {
-    const raw = resumeInput.value.trim();
-
-    try {
-      if (!raw) throw new Error("Paste a code first.");
-
-      // If it looks like a Transfer Code, use that
-      if (raw.startsWith("T1-")) {
-        const state = decodeTransferCode(raw);
-        applyState(state);
-        setResumeMsg("✅ Resumed from Transfer Code.");
-        return;
-      }
-
-      // Otherwise treat it as a Short Code (same device)
-      const code = raw.toUpperCase().replace(/\s+/g, "");
-      if (code.length < 6 || code.length > 8) {
-        throw new Error("That code is not the right length. Use the Transfer Code or the Short Code (6–8 letters/numbers).");
-      }
-
-      const stored = loadSaved(shortKey(code));
-      if (!stored) throw new Error("Short Code not found on this device. Use the Transfer Code or QR if you switched devices.");
-
-      const state = JSON.parse(stored);
-      applyState(state);
-      setResumeMsg("✅ Resumed from Short Code (same device).");
-    } catch (err) {
-      setResumeMsg(`⚠️ ${err.message}`);
-    }
-  });
-}
-
-// --------------------
-// Reset
-// --------------------
-const resetBtn = document.getElementById("resetBtn");
-if (resetBtn) {
-  resetBtn.addEventListener("click", () => {
-    const ok = confirm("This will clear saved work on THIS device. Continue?");
-    if (!ok) return;
-
-    SAVE_KEYS.forEach(removeLocal);
-    // Note: we do not delete all possible short-code entries; that's okay for a prototype.
-    location.reload();
-  });
-}
-
-// --------------------
+// =====================
 // Start
-// --------------------
-const savedStep = loadSaved("currentStep") || "step1";
-showStep(savedStep);
-renderBranchFeedback(loadSaved("branch_choice"));
+// 1) Try resume from QR/link hash
+// 2) Else resume locally (same device)
+// =====================
+const resumedFromHash = tryResumeFromHash();
+if (!resumedFromHash) {
+  const savedStep = loadSaved("currentStep") || "step1";
+  showStep(savedStep);
+  renderBranchFeedback(loadSaved("branch_choice"));
+}
